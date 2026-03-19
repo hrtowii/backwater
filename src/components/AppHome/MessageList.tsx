@@ -19,10 +19,10 @@ export default function MessageList({
   selectedChannelId,
 }: MessageListProps) {
   return (
-    <section className="mt-4 space-y-3">
+    <section className="mt-4 gap-3 flex-1 overflow-y-auto flex flex-col-reverse">
       {messages.map((message) => (
         <Message
-          key={message.id}
+          key={message.created_at_ms}
           message={message}
           isPinned={pinnedSet.has(message.id)}
           onTogglePin={() => onTogglePin(message.id)}

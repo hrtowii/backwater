@@ -59,6 +59,11 @@ export type CustomColors = {
   highlightHigh?: string
 }
 
+export type MediaFileData = {
+  data: Uint8Array
+  mimeType: string
+}
+
 export type UpdateSettingsInput = {
   theme_preset: string
   custom_colors?: CustomColors | null
@@ -97,4 +102,6 @@ export const api = {
   listPinned: (channelId: number) => invoke<Pinned[]>('list_pinned', { channelId }),
   getSettings: () => invoke<Settings>('get_settings'),
   updateSettings: (input: UpdateSettingsInput) => invoke<Settings>('update_settings', { input }),
+  saveMediaFile: (sourcePath: string) => invoke<string>('save_media_file', { sourcePath }),
+  readMediaFile: (relativePath: string) => invoke<MediaFileData>('read_media_file', { relativePath }),
 }

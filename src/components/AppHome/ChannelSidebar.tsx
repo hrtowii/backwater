@@ -33,7 +33,7 @@ export default function ChannelSidebar({
     <aside className="border-b border-overlay/60 bg-base/70 p-5 backdrop-blur md:border-b-0 md:border-r">
       <div className="mb-5 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <h1 className="font-display text-2xl leading-none tracking-wide sm:text-3xl md:text-4xl md:tracking-[0.1em]">
+          <h1 className="font-display text-2xl leading-none tracking-wide sm:text-3xl md:text-3xl md:tracking-[0.1em]">
             backwater
           </h1>
         </div>

@@ -13,6 +13,7 @@ export default function AppHome() {
   const [pinned, setPinned] = useState<Pinned[]>([])
   const [channelName, setChannelName] = useState('#')
   const [composerText, setComposerText] = useState('')
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null)
   const [searchText, setSearchText] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
@@ -126,12 +127,10 @@ export default function AppHome() {
 
   // Handle immediate search (bypassing debounce) for Enter key and Apply button
   function handleImmediateSearch() {
-    // Clear any pending debounce timer
     if (debounceTimerRef.current !== null) {
       clearTimeout(debounceTimerRef.current)
       debounceTimerRef.current = null
     }
-    // Trigger search immediately
     void refreshMessages()
   }
 
@@ -207,8 +206,9 @@ export default function AppHome() {
     try {
       setLoading(true)
       setError(null)
-      await api.createMessage(selectedChannelId, content, null)
+      await api.createMessage(selectedChannelId, content, mediaUrl)
       setComposerText('')
+      setMediaUrl(null)
       await refreshMessages()
     } catch (err) {
       setError(formatError(err))
@@ -278,7 +278,7 @@ export default function AppHome() {
           loading={loading}
         />
 
-        <main className="p-4 md:p-6">
+        <main className="p-4 md:p-6 flex flex-col h-screen">
           <header className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-display text-xl tracking-wide sm:text-2xl md:text-3xl">
               {selectedChannel?.name ?? 'Select a channel'}
@@ -298,22 +298,29 @@ export default function AppHome() {
 
           {error ? <p className="mt-3 text-sm text-love">{error}</p> : null}
 
-          <MessageComposer
-            composerText={composerText}
-            onComposerTextChange={setComposerText}
-            onSubmit={handleCreateMessage}
-            onKeyDown={handleMessageKeyDown}
-            disabled={loading || selectedChannelId === null}
-          />
+          <div className='flex flex-col w-full space-between flex-1 min-h-0'>
+            <MessageList
+              messages={messages}
+              pinnedSet={pinnedSet}
+              onTogglePin={handleTogglePin}
+              onDeleteMessage={handleDeleteMessage}
+              loading={loading}
+              selectedChannelId={selectedChannelId}
+            />
+            <div className="sticky bottom-0 bg-background pt-2">
 
-          <MessageList
-            messages={messages}
-            pinnedSet={pinnedSet}
-            onTogglePin={handleTogglePin}
-            onDeleteMessage={handleDeleteMessage}
-            loading={loading}
-            selectedChannelId={selectedChannelId}
-          />
+              <MessageComposer
+                composerText={composerText}
+                mediaUrl={mediaUrl}
+                onComposerTextChange={setComposerText}
+                onMediaUrlChange={setMediaUrl}
+                onSubmit={handleCreateMessage}
+                onKeyDown={handleMessageKeyDown}
+                disabled={loading || selectedChannelId === null}
+              />
+            </div>
+          </div>
+
         </main>
       </div>
     </div>

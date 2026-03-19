@@ -6,8 +6,8 @@ use tauri::{TitleBarStyle, WebviewUrl, WebviewWindowBuilder};
 
 use crate::commands::{
     create_channel, create_message, delete_channel, delete_message, get_settings, healthcheck,
-    list_channels, list_messages, list_pinned, pin_message, search_messages, unpin_message,
-    update_message, update_settings,
+    list_channels, list_messages, list_pinned, pin_message, read_media_file, save_media_file,
+    search_messages, unpin_message, update_message, update_settings,
 };
 use crate::state::AppState;
 use std::fs;
@@ -43,6 +43,7 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             healthcheck,
             create_channel,
@@ -57,7 +58,9 @@ pub fn run() {
             list_pinned,
             search_messages,
             get_settings,
-            update_settings
+            update_settings,
+            save_media_file,
+            read_media_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

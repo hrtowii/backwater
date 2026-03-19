@@ -50,6 +50,10 @@
   --theme-highlight-low: var(--color-highlight-low);
   --theme-highlight-med: var(--color-highlight-med);
   --theme-highlight-high: var(--color-highlight-high);
+  @keyframes channelDeleteFadeIn {
+  from { opacity: 0; transform: translateX(4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
 }
 
 * {
