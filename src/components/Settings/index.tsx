@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { useThemeSettings } from './useThemeSettings'
 import ThemePresetSelector from './ThemePresetSelector'
+import EditorThemeSelector from './EditorThemeSelector'
 import AdvancedColorCustomization from './AdvancedColorCustomization'
 import ThemePreview from './ThemePreview'
 import AboutSection from './AboutSection'
@@ -10,10 +11,12 @@ export default function Settings() {
     preset,
     tempPreset,
     tempColors,
+    tempEditorTheme,
     loading,
     saving,
     handlePresetChange,
     handleColorChange,
+    handleEditorThemeChange,
     handleSave,
     handleReset,
     getCurrentColor,
@@ -46,6 +49,15 @@ export default function Settings() {
             loading={loading}
             saving={saving}
             onPresetChange={handlePresetChange}
+            onSave={handleSave}
+            onReset={handleReset}
+          />
+
+          <EditorThemeSelector
+            tempEditorTheme={tempEditorTheme}
+            loading={loading}
+            saving={saving}
+            onEditorThemeChange={handleEditorThemeChange}
             onSave={handleSave}
             onReset={handleReset}
           />

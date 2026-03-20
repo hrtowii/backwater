@@ -5,6 +5,7 @@ use sqlx::FromRow;
 pub struct Message {
     pub id: i64,
     pub channel_id: i64,
+    pub thread_id: Option<i64>,
     pub content: String,
     pub media_url: Option<String>,
     pub created_at_ms: i64,
@@ -14,6 +15,7 @@ pub struct Message {
 #[derive(Debug, Deserialize)]
 pub struct CreateMessage {
     pub channel_id: i64,
+    pub thread_id: Option<i64>,
     pub content: String,
     pub media_url: Option<String>,
 }
@@ -28,6 +30,7 @@ pub struct UpdateMessage {
 #[derive(Debug, Deserialize)]
 pub struct ListMessagesParams {
     pub channel_id: i64,
+    pub thread_id: Option<i64>,
     pub from_ms: Option<i64>,
     pub to_ms: Option<i64>,
 }
@@ -35,6 +38,7 @@ pub struct ListMessagesParams {
 #[derive(Debug, Deserialize)]
 pub struct SearchMessagesParams {
     pub channel_id: i64,
+    pub thread_id: Option<i64>,
     pub query: String,
     pub from_ms: Option<i64>,
     pub to_ms: Option<i64>,

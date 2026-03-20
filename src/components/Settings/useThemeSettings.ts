@@ -3,9 +3,10 @@ import { useTheme, THEME_PRESETS, type ThemePreset } from '../../contexts/ThemeC
 import type { CustomColors } from '../../lib/api'
 
 export function useThemeSettings() {
-  const { preset, customColors, setTheme, loading } = useTheme()
+  const { preset, customColors, editorTheme, setTheme, loading } = useTheme()
   const [tempPreset, setTempPreset] = useState<ThemePreset>(preset)
   const [tempColors, setTempColors] = useState<CustomColors>(customColors || {})
+  const [tempEditorTheme, setTempEditorTheme] = useState<string>(editorTheme)
   const [saving, setSaving] = useState(false)
 
   const handlePresetChange = (newPreset: ThemePreset) => {
@@ -22,11 +23,15 @@ export function useThemeSettings() {
     }))
   }
 
+  const handleEditorThemeChange = (value: string) => {
+    setTempEditorTheme(value)
+  }
+
   const handleSave = async () => {
     try {
       setSaving(true)
       const colorsToSave = Object.keys(tempColors).length > 0 ? tempColors : null
-      await setTheme(tempPreset, colorsToSave)
+      await setTheme(tempPreset, colorsToSave, tempEditorTheme)
     } catch (error) {
       console.error('Failed to save settings:', error)
     } finally {
@@ -37,6 +42,7 @@ export function useThemeSettings() {
   const handleReset = () => {
     setTempPreset(preset)
     setTempColors(customColors || {})
+    setTempEditorTheme(editorTheme)
   }
 
   const getCurrentColor = (key: keyof CustomColors): string => {
@@ -69,10 +75,13 @@ export function useThemeSettings() {
     preset,
     tempPreset,
     tempColors,
+    tempEditorTheme,
+    editorTheme,
     loading,
     saving,
     handlePresetChange,
     handleColorChange,
+    handleEditorThemeChange,
     handleSave,
     handleReset,
     getCurrentColor,

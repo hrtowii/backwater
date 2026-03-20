@@ -6,6 +6,7 @@ interface MessageListProps {
   pinnedSet: Set<number>
   onTogglePin: (messageId: number) => void
   onDeleteMessage: (messageId: number) => void
+  onMessageUpdated: () => void
   loading: boolean
   selectedChannelId: number | null
 }
@@ -15,6 +16,7 @@ export default function MessageList({
   pinnedSet,
   onTogglePin,
   onDeleteMessage,
+  onMessageUpdated,
   loading,
   selectedChannelId,
 }: MessageListProps) {
@@ -27,6 +29,7 @@ export default function MessageList({
           isPinned={pinnedSet.has(message.id)}
           onTogglePin={() => onTogglePin(message.id)}
           onDelete={() => onDeleteMessage(message.id)}
+          onUpdated={onMessageUpdated}
           disabled={loading || selectedChannelId === null}
         />
       ))}

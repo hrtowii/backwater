@@ -19,13 +19,15 @@ type ThemeColors = {
   highlightLow: string
   highlightMed: string
   highlightHigh: string
+  colorScheme: 'dark' | 'light'
 }
 
 type ThemeContextValue = {
   preset: ThemePreset
   colors: ThemeColors
   customColors: CustomColors | null
-  setTheme: (preset: ThemePreset, customColors?: CustomColors | null) => Promise<void>
+  editorTheme: string
+  setTheme: (preset: ThemePreset, customColors?: CustomColors | null, editorTheme?: string) => Promise<void>
   loading: boolean
 }
 
@@ -48,6 +50,7 @@ const THEME_PRESETS: Record<Exclude<ThemePreset, 'custom'>, ThemeColors> = {
     highlightLow: '#21202e',
     highlightMed: '#403d52',
     highlightHigh: '#524f67',
+    colorScheme: 'dark',
   },
   rose_pine_moon: {
     base: '#232136',
@@ -65,6 +68,7 @@ const THEME_PRESETS: Record<Exclude<ThemePreset, 'custom'>, ThemeColors> = {
     highlightLow: '#2a283e',
     highlightMed: '#44415a',
     highlightHigh: '#56526e',
+    colorScheme: 'dark',
   },
   rose_pine_dawn: {
     base: '#faf4ed',
@@ -82,6 +86,7 @@ const THEME_PRESETS: Record<Exclude<ThemePreset, 'custom'>, ThemeColors> = {
     highlightLow: '#f4ede8',
     highlightMed: '#dfdad9',
     highlightHigh: '#cecacd',
+    colorScheme: 'light',
   },
   ocean: {
     base: '#08141d',
@@ -99,6 +104,7 @@ const THEME_PRESETS: Record<Exclude<ThemePreset, 'custom'>, ThemeColors> = {
     highlightLow: '#0f1f2a',
     highlightMed: '#244255',
     highlightHigh: '#2f5166',
+    colorScheme: 'dark',
   },
 }
 
@@ -119,14 +125,7 @@ function applyThemeColors(colors: ThemeColors) {
   root.style.setProperty('--theme-highlight-low', colors.highlightLow)
   root.style.setProperty('--theme-highlight-med', colors.highlightMed)
   root.style.setProperty('--theme-highlight-high', colors.highlightHigh)
-  
-  // Update gradient background based on theme
-  const isDark = parseInt(colors.base.slice(1, 3), 16) < 128
-  if (isDark) {
-    root.style.background = `radial-gradient(circle at top, ${colors.overlay} 0%, ${colors.surface} 45%, ${colors.base} 100%)`
-  } else {
-    root.style.background = `radial-gradient(circle at top, ${colors.overlay} 0%, ${colors.surface} 45%, ${colors.base} 100%)`
-  }
+  root.style.setProperty('--theme-color-scheme', colors.colorScheme)
 }
 
 function mergeColors(preset: ThemeColors, custom: CustomColors | null): ThemeColors {
@@ -148,12 +147,14 @@ function mergeColors(preset: ThemeColors, custom: CustomColors | null): ThemeCol
     highlightLow: custom.highlightLow ?? preset.highlightLow,
     highlightMed: custom.highlightMed ?? preset.highlightMed,
     highlightHigh: custom.highlightHigh ?? preset.highlightHigh,
+    colorScheme: preset.colorScheme,
   }
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [preset, setPreset] = useState<ThemePreset>('rose_pine_main')
   const [customColors, setCustomColors] = useState<CustomColors | null>(null)
+  const [editorTheme, setEditorTheme] = useState<string>('rose-pine')
   const [colors, setColors] = useState<ThemeColors>(THEME_PRESETS.rose_pine_main)
   const [loading, setLoading] = useState(true)
 
@@ -168,6 +169,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
         setPreset(presetKey)
         setCustomColors(parsedCustomColors)
+        setEditorTheme(settings.editor_theme)
 
         const baseColors = presetKey === 'custom' 
           ? THEME_PRESETS.rose_pine_main 
@@ -186,7 +188,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     void loadSettings()
   }, [])
 
-  const setTheme = async (newPreset: ThemePreset, newCustomColors?: CustomColors | null) => {
+  const setTheme = async (newPreset: ThemePreset, newCustomColors?: CustomColors | null, newEditorTheme?: string) => {
     try {
       setLoading(true)
       
@@ -195,14 +197,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         : THEME_PRESETS[newPreset] ?? THEME_PRESETS.rose_pine_main
       
       const finalColors = mergeColors(baseColors, newCustomColors ?? null)
+      const finalEditorTheme = newEditorTheme ?? editorTheme
       
       await api.updateSettings({
         theme_preset: newPreset,
         custom_colors: newCustomColors ?? null,
+        editor_theme: finalEditorTheme,
       })
 
       setPreset(newPreset)
       setCustomColors(newCustomColors ?? null)
+      setEditorTheme(finalEditorTheme)
       setColors(finalColors)
       applyThemeColors(finalColors)
     } catch (error) {
@@ -214,7 +219,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ThemeContext.Provider value={{ preset, colors, customColors, setTheme, loading }}>
+    <ThemeContext.Provider value={{ preset, colors, customColors, editorTheme, setTheme, loading }}>
       {children}
     </ThemeContext.Provider>
   )

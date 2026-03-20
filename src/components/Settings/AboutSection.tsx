@@ -10,7 +10,7 @@ export default function AboutSection({ preset, getPresetDisplayName }: AboutSect
     <section className="rounded-lg border border-overlay bg-surface/65 p-5">
       <h2 className="text-xl font-semibold">About</h2>
       <div className="mt-3 space-y-2 text-sm text-subtle">
-        <p>backwater - notes-to-self channels</p>
+        <p>backwater - self channels</p>
         <p>Font: DepartureMono Nerd Font</p>
         <p>
           Theme:{' '}

@@ -138,7 +138,7 @@ export default function MessageComposer({
           value={composerText}
           onChange={(event) => onComposerTextChange(event.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="send...."
+          placeholder="send..."
           className="min-h-28 rounded-md border border-overlay bg-surface px-3 py-2 text-sm text-text placeholder:text-muted focus:border-rose focus:outline-none"
           maxLength={10_000}
         />

@@ -5,9 +5,10 @@ mod state;
 use tauri::{TitleBarStyle, WebviewUrl, WebviewWindowBuilder};
 
 use crate::commands::{
-    create_channel, create_message, delete_channel, delete_message, get_settings, healthcheck,
-    list_channels, list_messages, list_pinned, pin_message, read_media_file, save_media_file,
-    search_messages, unpin_message, update_message, update_settings,
+    create_channel, create_message, create_thread, delete_channel, delete_message, delete_thread,
+    get_settings, healthcheck, list_channels, list_messages, list_pinned, list_threads,
+    pin_message, read_media_file, save_media_file, search_messages, unpin_message,
+    update_message, update_settings,
 };
 use crate::state::AppState;
 use std::fs;
@@ -60,7 +61,10 @@ pub fn run() {
             get_settings,
             update_settings,
             save_media_file,
-            read_media_file
+            read_media_file,
+            create_thread,
+            list_threads,
+            delete_thread
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

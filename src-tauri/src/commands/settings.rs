@@ -7,7 +7,7 @@ use super::utils::now_ms;
 #[tauri::command]
 pub async fn get_settings(state: State<'_, AppState>) -> Result<Settings, String> {
     sqlx::query_as::<_, Settings>(
-        "SELECT id, theme_preset, custom_colors, updated_at FROM settings WHERE id = 1",
+        "SELECT id, theme_preset, custom_colors, editor_theme, updated_at FROM settings WHERE id = 1",
     )
     .fetch_one(&state.pool)
     .await
@@ -27,10 +27,11 @@ pub async fn update_settings(
         .and_then(|colors| serde_json::to_string(colors).ok());
 
     sqlx::query(
-        "UPDATE settings SET theme_preset = ?, custom_colors = ?, updated_at = ? WHERE id = 1",
+        "UPDATE settings SET theme_preset = ?, custom_colors = ?, editor_theme = ?, updated_at = ? WHERE id = 1",
     )
     .bind(&input.theme_preset)
     .bind(custom_colors_json)
+    .bind(&input.editor_theme)
     .bind(updated_at)
     .execute(&state.pool)
     .await

@@ -6,9 +6,17 @@ export type Channel = {
   created_at_ms: number
 }
 
+export type Thread = {
+  id: number
+  channel_id: number
+  name: string
+  created_at_ms: number
+}
+
 export type Message = {
   id: number
   channel_id: number
+  thread_id: number | null
   content: string
   media_url: string | null
   created_at_ms: number
@@ -21,23 +29,42 @@ export type Pinned = {
   pinned_at_ms: number
 }
 
+export type SelectedView =
+  | { type: 'channel'; id: number }
+  | { type: 'thread'; id: number; channelId: number }
+
 export type ListMessagesInput = {
   channel_id: number
+  thread_id?: number
   from_ms?: number
   to_ms?: number
 }
 
 export type SearchMessagesInput = {
   channel_id: number
+  thread_id?: number
   query: string
   from_ms?: number
   to_ms?: number
+}
+
+export type CreateMessageInput = {
+  channel_id: number
+  thread_id?: number
+  content: string
+  media_url?: string | null
+}
+
+export type CreateThreadInput = {
+  channel_id: number
+  name: string
 }
 
 export type Settings = {
   id: number
   theme_preset: string
   custom_colors: string | null
+  editor_theme: string
   updated_at: number
 }
 
@@ -67,6 +94,7 @@ export type MediaFileData = {
 export type UpdateSettingsInput = {
   theme_preset: string
   custom_colors?: CustomColors | null
+  editor_theme: string
 }
 
 export const api = {
@@ -74,18 +102,15 @@ export const api = {
   listChannels: () => invoke<Channel[]>('list_channels'),
   createChannel: (name: string) => invoke<Channel>('create_channel', { input: { name } }),
   deleteChannel: (channelId: number) => invoke<void>('delete_channel', { channelId }),
+  createThread: (input: CreateThreadInput) => invoke<Thread>('create_thread', { input }),
+  listThreads: (channelId: number) => invoke<Thread[]>('list_threads', { channelId }),
+  deleteThread: (threadId: number) => invoke<void>('delete_thread', { threadId }),
   listMessages: (input: ListMessagesInput) =>
     invoke<Message[]>('list_messages', { input }),
   searchMessages: (input: SearchMessagesInput) =>
     invoke<Message[]>('search_messages', { input }),
-  createMessage: (channelId: number, content: string, mediaUrl?: string | null) =>
-    invoke<Message>('create_message', {
-      input: {
-        channel_id: channelId,
-        content,
-        media_url: mediaUrl ?? null,
-      },
-    }),
+  createMessage: (input: CreateMessageInput) =>
+    invoke<Message>('create_message', { input }),
   updateMessage: (id: number, content: string, mediaUrl?: string | null) =>
     invoke<Message>('update_message', {
       input: {

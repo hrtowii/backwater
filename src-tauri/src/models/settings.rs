@@ -6,6 +6,7 @@ pub struct Settings {
     pub id: i64,
     pub theme_preset: String,
     pub custom_colors: Option<String>,
+    pub editor_theme: String,
     pub updated_at: i64,
 }
 
@@ -13,4 +14,5 @@ pub struct Settings {
 pub struct UpdateSettingsParams {
     pub theme_preset: String,
     pub custom_colors: Option<serde_json::Value>,
+    pub editor_theme: String,
 }

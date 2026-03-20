@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from 'react'
-import { api, type Channel, type Message, type Pinned } from '../../lib/api'
+import { api, type Channel, type Message, type Pinned, type Thread, type SelectedView } from '../../lib/api'
 import { dateStartMs, dateEndMs, formatError } from './utils'
 import ChannelSidebar from './ChannelSidebar'
 import MessageFilters from './MessageFilters'
@@ -8,7 +8,8 @@ import MessageList from './MessageList'
 
 export default function AppHome() {
   const [channels, setChannels] = useState<Channel[]>([])
-  const [selectedChannelId, setSelectedChannelId] = useState<number | null>(null)
+  const [threads, setThreads] = useState<Map<number, Thread[]>>(new Map())
+  const [selectedView, setSelectedView] = useState<SelectedView | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [pinned, setPinned] = useState<Pinned[]>([])
   const [channelName, setChannelName] = useState('#')
@@ -19,8 +20,6 @@ export default function AppHome() {
   const [toDate, setToDate] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // Debounce timer ref
   const debounceTimerRef = useRef<number | null>(null)
 
   const pinnedSet = useMemo(
@@ -28,17 +27,30 @@ export default function AppHome() {
     [pinned],
   )
 
-  const selectedChannel = useMemo(
-    () => channels.find((channel) => channel.id === selectedChannelId) ?? null,
-    [channels, selectedChannelId],
-  )
+  const selectedChannelId = useMemo(() => {
+    if (selectedView === null) return null
+    if (selectedView.type === 'channel') return selectedView.id
+    return selectedView.channelId
+  }, [selectedView])
+
+  const headerTitle = useMemo(() => {
+    if (selectedView === null) return 'select channel'
+    const channel = channels.find((c) => c.id === selectedView.id) ?? null
+    if (selectedView.type === 'channel') {
+      return channel?.name ?? 'select channel'
+    }
+    const channelThreads = threads.get(selectedView.channelId) ?? []
+    const thread = channelThreads.find((t) => t.id === selectedView.id)
+    const channelName = channels.find((c) => c.id === selectedView.channelId)?.name ?? ''
+    return `${channelName} / ${thread?.name ?? ''}`
+  }, [selectedView, channels, threads])
 
   useEffect(() => {
     void refreshChannels()
   }, [])
 
   useEffect(() => {
-    if (selectedChannelId === null) {
+    if (selectedView === null) {
       setMessages([])
       setPinned([])
       return
@@ -46,32 +58,27 @@ export default function AppHome() {
 
     void refreshMessages()
     void refreshPinned()
-  }, [selectedChannelId])
+  }, [selectedView])
 
-  // Live search with debounce: trigger search when searchText, fromDate, or toDate change
   useEffect(() => {
-    // Clear any existing timer
     if (debounceTimerRef.current !== null) {
       clearTimeout(debounceTimerRef.current)
     }
 
-    // Don't search if no channel is selected
-    if (selectedChannelId === null) {
+    if (selectedView === null) {
       return
     }
 
-    // Set up new debounce timer (300ms)
     debounceTimerRef.current = window.setTimeout(() => {
       void refreshMessages()
     }, 300)
 
-    // Cleanup function
     return () => {
       if (debounceTimerRef.current !== null) {
         clearTimeout(debounceTimerRef.current)
       }
     }
-  }, [searchText, fromDate, toDate, selectedChannelId])
+  }, [searchText, fromDate, toDate, selectedView])
 
   async function refreshChannels() {
     try {
@@ -80,24 +87,60 @@ export default function AppHome() {
       setChannels(result)
 
       if (result.length === 0) {
-        setSelectedChannelId(null)
+        setSelectedView(null)
         return
       }
 
-      setSelectedChannelId((current) => {
-        if (current && result.some((channel) => channel.id === current)) {
-          return current
-        }
+      // Load threads for all channels
+      await refreshAllThreads(result)
 
-        return result[0]?.id ?? null
+      setSelectedView((current) => {
+        if (current) {
+          if (current.type === 'channel' && result.some((ch) => ch.id === current.id)) {
+            return current
+          }
+          if (current.type === 'thread') {
+            // Verify the channel still exists
+            if (result.some((ch) => ch.id === current.channelId)) {
+              return current
+            }
+          }
+        }
+        return { type: 'channel', id: result[0].id }
       })
     } catch (err) {
       setError(formatError(err))
     }
   }
 
+  async function refreshAllThreads(channelList: Channel[]) {
+    const newThreads = new Map<number, Thread[]>()
+    for (const channel of channelList) {
+      try {
+        const threadList = await api.listThreads(channel.id)
+        newThreads.set(channel.id, threadList)
+      } catch {
+        newThreads.set(channel.id, [])
+      }
+    }
+    setThreads(newThreads)
+  }
+
+  async function refreshThreadsForChannel(channelId: number) {
+    try {
+      const threadList = await api.listThreads(channelId)
+      setThreads((prev) => {
+        const next = new Map(prev)
+        next.set(channelId, threadList)
+        return next
+      })
+    } catch {
+      // ignore
+    }
+  }
+
   async function refreshMessages() {
-    if (selectedChannelId === null) {
+    if (selectedView === null) {
       return
     }
 
@@ -106,15 +149,20 @@ export default function AppHome() {
       const fromMs = fromDate ? dateStartMs(fromDate) : undefined
       const toMs = toDate ? dateEndMs(toDate) : undefined
 
+      const channelId = selectedView.type === 'channel' ? selectedView.id : selectedView.channelId
+      const threadId = selectedView.type === 'thread' ? selectedView.id : undefined
+
       const result = searchText.trim()
         ? await api.searchMessages({
-          channel_id: selectedChannelId,
+          channel_id: channelId,
+          thread_id: threadId,
           query: searchText,
           from_ms: fromMs,
           to_ms: toMs,
         })
         : await api.listMessages({
-          channel_id: selectedChannelId,
+          channel_id: channelId,
+          thread_id: threadId,
           from_ms: fromMs,
           to_ms: toMs,
         })
@@ -125,7 +173,6 @@ export default function AppHome() {
     }
   }
 
-  // Handle immediate search (bypassing debounce) for Enter key and Apply button
   function handleImmediateSearch() {
     if (debounceTimerRef.current !== null) {
       clearTimeout(debounceTimerRef.current)
@@ -134,7 +181,6 @@ export default function AppHome() {
     void refreshMessages()
   }
 
-  // Handle Enter key press in search input
   function handleSearchKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'Enter') {
       event.preventDefault()
@@ -159,7 +205,6 @@ export default function AppHome() {
   async function handleCreateChannel(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     let name = channelName.trim()
-    // Remove trailing dashes before sending to DB
     name = name.replace(/-+$/, '')
     if (!name || name === '#') {
       return
@@ -171,7 +216,7 @@ export default function AppHome() {
       const newChannel = await api.createChannel(name)
       setChannelName('#')
       await refreshChannels()
-      setSelectedChannelId(newChannel.id)
+      setSelectedView({ type: 'channel', id: newChannel.id })
     } catch (err) {
       setError(formatError(err))
     } finally {
@@ -184,6 +229,14 @@ export default function AppHome() {
       setLoading(true)
       setError(null)
       await api.deleteChannel(channelId)
+      if (selectedView !== null) {
+        if (
+          (selectedView.type === 'channel' && selectedView.id === channelId) ||
+          (selectedView.type === 'thread' && selectedView.channelId === channelId)
+        ) {
+          setSelectedView(null)
+        }
+      }
       await refreshChannels()
     } catch (err) {
       setError(formatError(err))
@@ -192,9 +245,47 @@ export default function AppHome() {
     }
   }
 
+  async function handleCreateThread(channelId: number, name: string) {
+    try {
+      setLoading(true)
+      setError(null)
+      const newThread = await api.createThread({ channel_id: channelId, name })
+      await refreshThreadsForChannel(channelId)
+      setSelectedView({ type: 'thread', id: newThread.id, channelId })
+    } catch (err) {
+      setError(formatError(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleDeleteThread(threadId: number, channelId: number) {
+    try {
+      setLoading(true)
+      setError(null)
+      await api.deleteThread(threadId)
+      if (selectedView?.type === 'thread' && selectedView.id === threadId) {
+        setSelectedView({ type: 'channel', id: channelId })
+      }
+      await refreshThreadsForChannel(channelId)
+    } catch (err) {
+      setError(formatError(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function handleSelectChannel(channelId: number) {
+    setSelectedView({ type: 'channel', id: channelId })
+  }
+
+  function handleSelectThread(threadId: number, channelId: number) {
+    setSelectedView({ type: 'thread', id: threadId, channelId })
+  }
+
   async function handleCreateMessage(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (selectedChannelId === null) {
+    if (selectedView === null) {
       return
     }
 
@@ -206,7 +297,14 @@ export default function AppHome() {
     try {
       setLoading(true)
       setError(null)
-      await api.createMessage(selectedChannelId, content, mediaUrl)
+      const channelId = selectedView.type === 'channel' ? selectedView.id : selectedView.channelId
+      const threadId = selectedView.type === 'thread' ? selectedView.id : undefined
+      await api.createMessage({
+        channel_id: channelId,
+        thread_id: threadId,
+        content,
+        media_url: mediaUrl,
+      })
       setComposerText('')
       setMediaUrl(null)
       await refreshMessages()
@@ -221,7 +319,7 @@ export default function AppHome() {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault()
       const content = composerText.trim()
-      if (content && selectedChannelId !== null) {
+      if (content && selectedView !== null) {
         void handleCreateMessage(event as any)
       }
     }
@@ -269,19 +367,23 @@ export default function AppHome() {
       <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 md:grid-cols-[290px_1fr]">
         <ChannelSidebar
           channels={channels}
-          selectedChannelId={selectedChannelId}
+          threads={threads}
+          selectedView={selectedView}
           channelName={channelName}
           onChannelNameChange={setChannelName}
           onCreateChannel={handleCreateChannel}
-          onSelectChannel={setSelectedChannelId}
+          onSelectChannel={handleSelectChannel}
           onDeleteChannel={handleDeleteChannel}
+          onSelectThread={handleSelectThread}
+          onDeleteThread={handleDeleteThread}
+          onCreateThread={handleCreateThread}
           loading={loading}
         />
 
         <main className="p-4 md:p-6 flex flex-col h-screen">
           <header className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-display text-xl tracking-wide sm:text-2xl md:text-3xl">
-              {selectedChannel?.name ?? 'Select a channel'}
+              {headerTitle}
             </h2>
 
             <MessageFilters
@@ -304,6 +406,7 @@ export default function AppHome() {
               pinnedSet={pinnedSet}
               onTogglePin={handleTogglePin}
               onDeleteMessage={handleDeleteMessage}
+              onMessageUpdated={refreshMessages}
               loading={loading}
               selectedChannelId={selectedChannelId}
             />
@@ -316,7 +419,7 @@ export default function AppHome() {
                 onMediaUrlChange={setMediaUrl}
                 onSubmit={handleCreateMessage}
                 onKeyDown={handleMessageKeyDown}
-                disabled={loading || selectedChannelId === null}
+                disabled={loading || selectedView === null}
               />
             </div>
           </div>

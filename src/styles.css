@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
 
 @font-face {
   font-family: "DepartureMono";
@@ -11,49 +13,50 @@
 @theme {
   --font-display: "DepartureMono", monospace;
   --font-body: "DepartureMono", monospace;
-  
-  /* Rosé Pine Main color palette */
-  --color-base: #191724;
-  --color-surface: #1f1d2e;
-  --color-overlay: #26233a;
-  --color-muted: #6e6a86;
-  --color-subtle: #908caa;
-  --color-text: #e0def4;
-  --color-love: #eb6f92;
-  --color-gold: #f6c177;
-  --color-rose: #ebbcba;
-  --color-pine: #31748f;
-  --color-foam: #9ccfd8;
-  --color-iris: #c4a7e7;
-  --color-highlight-low: #21202e;
-  --color-highlight-med: #403d52;
-  --color-highlight-high: #524f67;
+
+  --color-base: var(--theme-base);
+  --color-surface: var(--theme-surface);
+  --color-overlay: var(--theme-overlay);
+  --color-muted: var(--theme-muted);
+  --color-subtle: var(--theme-subtle);
+  --color-text: var(--theme-text);
+  --color-love: var(--theme-love);
+  --color-gold: var(--theme-gold);
+  --color-rose: var(--theme-rose);
+  --color-pine: var(--theme-pine);
+  --color-foam: var(--theme-foam);
+  --color-iris: var(--theme-iris);
+  --color-highlight-low: var(--theme-highlight-low);
+  --color-highlight-med: var(--theme-highlight-med);
+  --color-highlight-high: var(--theme-highlight-high);
 }
 
 :root {
+  /* Default theme values (Rosé Pine Main) */
+  --theme-base: #191724;
+  --theme-surface: #1f1d2e;
+  --theme-overlay: #26233a;
+  --theme-muted: #6e6a86;
+  --theme-subtle: #908caa;
+  --theme-text: #e0def4;
+  --theme-love: #eb6f92;
+  --theme-gold: #f6c177;
+  --theme-rose: #ebbcba;
+  --theme-pine: #31748f;
+  --theme-foam: #9ccfd8;
+  --theme-iris: #c4a7e7;
+  --theme-highlight-low: #21202e;
+  --theme-highlight-med: #403d52;
+  --theme-highlight-high: #524f67;
+  --theme-color-scheme: dark;
+
   color: var(--color-text);
-  background: radial-gradient(circle at top, #26233a 0%, #1f1d2e 45%, #191724 100%);
-  
-  /* CSS variables for dynamic theme switching with animations */
-  --theme-base: var(--color-base);
-  --theme-surface: var(--color-surface);
-  --theme-overlay: var(--color-overlay);
-  --theme-muted: var(--color-muted);
-  --theme-subtle: var(--color-subtle);
-  --theme-text: var(--color-text);
-  --theme-love: var(--color-love);
-  --theme-gold: var(--color-gold);
-  --theme-rose: var(--color-rose);
-  --theme-pine: var(--color-pine);
-  --theme-foam: var(--color-foam);
-  --theme-iris: var(--color-iris);
-  --theme-highlight-low: var(--color-highlight-low);
-  --theme-highlight-med: var(--color-highlight-med);
-  --theme-highlight-high: var(--color-highlight-high);
-  @keyframes channelDeleteFadeIn {
+  background: radial-gradient(circle at top, var(--theme-overlay) 0%, var(--theme-surface) 45%, var(--theme-base) 100%);
+}
+
+@keyframes channelDeleteFadeIn {
   from { opacity: 0; transform: translateX(4px); }
   to   { opacity: 1; transform: translateX(0); }
-}
 }
 
 * {

@@ -33,13 +33,13 @@ export default function MessageFilters({
         type="date"
         value={fromDate}
         onChange={(event) => onFromDateChange(event.target.value)}
-        className="rounded-md border border-overlay bg-surface px-3 py-2 text-sm focus:border-rose focus:outline-none [color-scheme:dark]"
+        className="rounded-md border border-overlay bg-surface px-3 py-2 text-sm focus:border-rose focus:outline-none [color-scheme:var(--theme-color-scheme)]"
       />
       <input
         type="date"
         value={toDate}
         onChange={(event) => onToDateChange(event.target.value)}
-        className="rounded-md border border-overlay bg-surface px-3 py-2 text-sm focus:border-rose focus:outline-none [color-scheme:dark]"
+        className="rounded-md border border-overlay bg-surface px-3 py-2 text-sm focus:border-rose focus:outline-none [color-scheme:var(--theme-color-scheme)]"
       />
       <button
         type="button"
